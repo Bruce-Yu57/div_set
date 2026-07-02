@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>兔子村莊：分房大冒險</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#EAF6F2;
+    --sky-deep:#DCF0E5;
+    --grass:#C3E6C9;
+    --grass-dark:#9FD1AC;
+    --dirt:#F4E4C8;
+    --wood:#EAC896;
+    --wood-dark:#D9AE74;
+    --roof-1:#FF9F86;
+    --roof-2:#FFC97A;
+    --roof-3:#8ED1C4;
+    --roof-4:#C9A6E0;
+    --ink:#33513F;
+    --ink-soft:#5B7768;
+    --card:#FFFFFF;
+    --accent:#FF8FA3;
+    --accent-deep:#E9647D;
+    --select:#FFD966;
+    --shadow:rgba(51,81,63,0.20);
+    --sun:#FFD166;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    height:100%; margin:0; overflow:hidden; overscroll-behavior:none;
+    font-family:'Baloo 2','PingFang TC','Microsoft JhengHei',sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,var(--sky) 0%, var(--sky-deep) 60%, var(--grass) 60%, var(--grass-dark) 100%);
+  }
+  button{font-family:inherit; cursor:pointer; border:none; -webkit-user-select:none; user-select:none;}
+  .hidden{display:none !important;}
+
+  /* ---------- decorative sun ---------- */
+  .sun{
+    position:fixed; top:18px; right:22px; width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #FFEFA8, var(--sun));
+    box-shadow:0 0 0 8px rgba(255,209,102,0.25);
+    z-index:0;
+  }
+
+  /* ================= INTRO ================= */
+  #intro-screen{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(180deg,var(--sky) 0%, var(--sky-deep) 55%, var(--grass) 55%, var(--grass-dark) 100%);
+    padding:20px;
+  }
+  .intro-card{
+    background:var(--card); border-radius:28px; max-width:560px; width:100%;
+    padding:28px 30px 26px; box-shadow:0 18px 0 var(--shadow);
+    text-align:center;
+  }
+  .intro-title{font-size:26px; font-weight:800; color:var(--accent-deep); margin:4px 0 2px;}
+  .intro-sub{font-size:14px; color:var(--ink-soft); margin-bottom:14px;}
+  .intro-bunny{width:96px; height:96px; margin:0 auto 6px; color:#F6C9C4;}
+  .intro-story{
+    background:var(--sky-deep); border-radius:18px; padding:16px 18px; text-align:left;
+    font-size:15.5px; line-height:1.75; color:var(--ink); margin:14px 0 18px;
+  }
+  .intro-story b{color:var(--accent-deep);}
+  .start-btn{
+    background:var(--accent); color:#fff; font-size:19px; font-weight:700;
+    padding:13px 36px; border-radius:999px; box-shadow:0 6px 0 var(--accent-deep);
+    transition:transform .08s;
+  }
+  .start-btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--accent-deep);}
+
+  /* ================= APP LAYOUT ================= */
+  #app{
+    position:relative; z-index:1; height:100%; display:flex; flex-direction:column;
+    padding:10px 14px 12px;
+  }
+  header.bar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    flex-wrap:wrap;
+  }
+  .title-block{display:flex; align-items:center; gap:10px;}
+  .title-block .mini-bunny{width:34px; height:34px; color:#fff;}
+  .game-title{font-size:18px; font-weight:800; color:var(--ink);}
+  .level-chip{
+    background:var(--card); border-radius:999px; padding:6px 14px; font-weight:700;
+    font-size:13.5px; box-shadow:0 3px 0 var(--shadow); color:var(--accent-deep);
+    white-space:nowrap;
+  }
+  .header-actions{display:flex; gap:8px;}
+  .icon-btn{
+    background:var(--card); border-radius:14px; padding:8px 12px; font-size:13.5px; font-weight:700;
+    box-shadow:0 3px 0 var(--shadow); color:var(--ink); display:flex; align-items:center; gap:6px;
+  }
+  .icon-btn .badge{
+    background:var(--accent); color:#fff; border-radius:999px; font-size:11px; font-weight:800;
+    padding:1px 7px; min-width:18px; text-align:center;
+  }
+
+  /* layout: main column + right-side found-factor panel */
+  .layout{flex:1; display:flex; gap:10px; min-height:0; margin-top:0;}
+  .main-col{flex:1; min-width:0; min-height:0; display:flex; flex-direction:column;}
+  .side-col{
+    width:172px; flex:none; background:var(--card); border-radius:18px;
+    padding:12px 12px 14px; box-shadow:0 3px 0 var(--shadow);
+    display:flex; flex-direction:column; overflow-y:auto; margin-top:8px;
+  }
+  .side-title{font-size:13px; font-weight:800; color:var(--accent-deep);}
+  .side-sub{font-size:11px; color:var(--ink-soft); margin-bottom:8px;}
+  .factor-chip-list{display:flex; flex-wrap:wrap; gap:6px; align-content:flex-start;}
+  .factor-chip{
+    background:#FFF3D6; border:2px solid var(--sun); border-radius:10px; padding:5px 9px;
+    font-size:14px; font-weight:800; color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; min-width:42px;
+  }
+  .factor-chip .eq{font-size:9px; font-weight:600; color:var(--ink-soft); margin-top:1px;}
+  .factor-empty{font-size:12px; color:var(--ink-soft); opacity:.75; line-height:1.5;}
+
+  @media (max-width:760px){
+    .layout{flex-direction:column;}
+    .side-col{
+      width:100%; max-height:none; flex-direction:row; align-items:flex-start;
+      gap:10px; margin-top:6px;
+    }
+    .side-col .side-head{flex:none; width:88px;}
+    .side-col .factor-chip-list{flex:1; min-width:0;}
+  }
+
+  /* mascot speech bubble */
+  .speech{
+    margin-top:8px; background:var(--card); border-radius:16px; padding:10px 16px;
+    font-size:14.5px; line-height:1.55; box-shadow:0 3px 0 var(--shadow);
+    display:flex; align-items:center; gap:10px; min-height:20px;
+  }
+  .speech .face{width:30px; height:30px; flex:none; color:#F6C9C4;}
+  .speech.warn{color:var(--accent-deep); font-weight:700;}
+  .speech.ok{color:#2C7A57; font-weight:700;}
+
+  /* meadow */
+  .meadow-wrap{margin-top:10px;}
+  .zone-label{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:0 0 5px 4px; letter-spacing:1px;}
+  #meadow{
+    min-height:78px; background:rgba(255,255,255,0.55); border:3px dashed var(--grass-dark);
+    border-radius:18px; padding:8px 10px; display:flex; flex-wrap:wrap; gap:6px; align-content:flex-start;
+    transition:background .15s, border-color .15s;
+  }
+  #meadow.drop-hover{background:rgba(255,217,102,0.35); border-color:var(--select);}
+
+  /* village / rooms */
+  .village-wrap{flex:1; margin-top:10px; min-height:0; display:flex; flex-direction:column;}
+  #village{
+    flex:1; min-height:0; overflow-y:auto;
+    display:grid; grid-template-columns:repeat(6,1fr); gap:8px 8px;
+    padding:10px; background:rgba(212,165,116,0.16); border-radius:18px;
+  }
+  @media (max-width:700px){ #village{grid-template-columns:repeat(4,1fr);} }
+  @media (max-width:460px){ #village{grid-template-columns:repeat(3,1fr);} }
+
+  .hut{
+    position:relative; border-radius:12px; display:flex; flex-direction:column; align-items:center;
+    padding-top:4px;
+  }
+  .hut-roof{
+    width:88%; height:26px; clip-path:polygon(50% 0%, 100% 100%, 0% 100%);
+    margin-bottom:-2px;
+  }
+  .hut-wall{
+    width:82%; flex:1; min-height:58px; background:var(--wood); border:2px solid var(--wood-dark);
+    border-radius:0 0 10px 10px; position:relative; display:flex; flex-wrap:wrap; align-content:flex-start;
+    align-items:flex-start; justify-content:center; gap:2px; padding:5px 3px 3px; transition:background .15s, box-shadow .15s;
+  }
+  .hut-wall.drop-hover{background:#FFE9B0; box-shadow:inset 0 0 0 3px var(--select);}
+  .hut-num{
+    position:absolute; top:-6px; left:2px; background:var(--card); color:var(--ink-soft);
+    font-size:9.5px; font-weight:800; border-radius:999px; width:16px; height:16px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 1px 0 var(--shadow); z-index:2;
+  }
+  .hut-count{
+    position:absolute; top:-6px; right:-2px; background:var(--accent); color:#fff;
+    font-size:10.5px; font-weight:800; border-radius:999px; padding:1px 6px; box-shadow:0 2px 0 var(--accent-deep);
+    z-index:2; opacity:0; transform:scale(.6); transition:all .15s;
+  }
+  .hut-count.show{opacity:1; transform:scale(1);}
+  .hut-window{
+    position:absolute; bottom:4px; right:4px; width:9px; height:9px; border-radius:50%;
+    background:#FFF6E0; border:1.5px solid var(--wood-dark); opacity:.7;
+  }
+
+  /* rabbit icon */
+  .rabbit{
+    width:30px; height:30px; flex:none; cursor:grab; touch-action:none;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,0.08));
+    transition:transform .1s;
+  }
+  .rabbit.selected{transform:scale(1.14); filter:drop-shadow(0 0 0 3px var(--select)) drop-shadow(0 2px 0 rgba(0,0,0,0.08));}
+  .rabbit:active{cursor:grabbing;}
+  #meadow .rabbit{width:36px; height:36px;}
+
+  /* footer */
+  footer.controls{
+    display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap;
+  }
+  .btn{
+    font-size:15px; font-weight:700; padding:11px 22px; border-radius:999px;
+    box-shadow:0 5px 0 var(--shadow); transition:transform .08s;
+  }
+  .btn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--shadow);}
+  .btn.primary{background:var(--accent); color:#fff; box-shadow:0 5px 0 var(--accent-deep);}
+  .btn.primary:active{box-shadow:0 2px 0 var(--accent-deep);}
+  .btn.secondary{background:var(--card); color:var(--ink);}
+
+  /* drag ghost */
+  #ghost{
+    position:fixed; z-index:999; pointer-events:none; display:none;
+    transform:translate(-50%,-50%);
+  }
+  #ghost .stack{position:relative; width:44px; height:44px;}
+  #ghost .stack .rabbit{position:absolute; width:34px; height:34px;}
+  #ghost .count-badge{
+    position:absolute; top:-6px; right:-10px; background:var(--accent-deep); color:#fff;
+    font-size:11px; font-weight:800; border-radius:999px; padding:2px 6px;
+  }
+
+  /* ================= MODALS ================= */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(51,81,63,0.45); z-index:60;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-card{
+    background:var(--card); border-radius:24px; max-width:480px; width:100%;
+    max-height:82vh; overflow-y:auto; padding:22px 22px 20px; box-shadow:0 16px 0 var(--shadow);
+  }
+  .modal-title{font-size:19px; font-weight:800; color:var(--accent-deep); margin-bottom:4px;}
+  .modal-sub{font-size:13px; color:var(--ink-soft); margin-bottom:14px;}
+  .stamp-grid{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:6px;}
+  .stamp{
+    width:78px; padding:10px 6px 8px; border-radius:14px; text-align:center;
+    background:var(--sky-deep); border:2px dashed var(--grass-dark); font-size:12px; color:var(--ink-soft);
+  }
+  .stamp.found{
+    background:#FFF3D6; border:2px solid var(--sun); color:var(--ink); font-weight:700;
+  }
+  .stamp .num{font-size:22px; font-weight:800; display:block;}
+  .stamp .eq{font-size:10.5px; margin-top:3px; color:var(--ink-soft);}
+  .modal-close{margin-top:16px; width:100%;}
+
+  .complete-card{text-align:center;}
+  .complete-emoji{font-size:52px; margin-bottom:4px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+
+  /* confetti */
+  .confetti-piece{
+    position:fixed; top:-10px; width:9px; height:14px; z-index:80; pointer-events:none;
+    border-radius:2px; animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(360deg); opacity:0.9; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sun"></div>
+
+<!-- shared SVG bunny symbol -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="bunny-icon" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="72" rx="27" ry="21" fill="currentColor"/>
+    <ellipse cx="32" cy="27" rx="9" ry="23" transform="rotate(-16 32 27)" fill="currentColor"/>
+    <ellipse cx="68" cy="27" rx="9" ry="23" transform="rotate(16 68 27)" fill="currentColor"/>
+    <ellipse cx="32" cy="29" rx="4" ry="13" transform="rotate(-16 32 29)" fill="#FFC7D1"/>
+    <ellipse cx="68" cy="29" rx="4" ry="13" transform="rotate(16 68 29)" fill="#FFC7D1"/>
+    <circle cx="50" cy="55" r="25" fill="currentColor"/>
+    <circle cx="41" cy="52" r="3" fill="#3A2E2E"/>
+    <circle cx="59" cy="52" r="3" fill="#3A2E2E"/>
+    <circle cx="35" cy="60" r="3.6" fill="#FFC7D1" opacity="0.7"/>
+    <circle cx="65" cy="60" r="3.6" fill="#FFC7D1" opacity="0.7"/>
+    <path d="M47 59 Q50 62.5 53 59" stroke="#3A2E2E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="57" rx="2" ry="1.5" fill="#E88A9A"/>
+  </symbol>
+</svg>
+
+<!-- ============ INTRO ============ -->
+<div id="intro-screen">
+  <div class="intro-card">
+    <svg class="intro-bunny"><use href="#bunny-icon"/></svg>
+    <div class="intro-title">兔子村莊：分房大冒險</div>
+    <div class="intro-sub">整除 × 因數 互動任務</div>
+    <div class="intro-story">
+      村長你好！森林邊搬來了一群小兔子 🐰，牠們想在村子裡蓋新家。<br><br>
+      兔子最重視<b>公平</b>：只要住進房子，<b>每一間用到的房子裡，兔子數量都要一樣多</b>，而且<b>不能有兔子孤單留在草地上</b>。<br><br>
+      請你點選兔子（可以一次選好幾隻），把牠們拖進房子裡，試試看能用<b>幾種不同的分房方式</b>，把村子的「因數收集本」集滿吧！
+    </div>
+    <button class="start-btn" id="startBtn">開始遊戲 🐾</button>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <header class="bar">
+    <div class="title-block">
+      <svg class="mini-bunny" style="color:var(--accent)"><use href="#bunny-icon"/></svg>
+      <div class="game-title">兔子村莊：分房大冒險</div>
+    </div>
+    <div class="header-actions">
+      <div class="level-chip" id="levelChip">第 1 關</div>
+      <button class="icon-btn" id="notebookBtn">📖 因數收集本 <span class="badge" id="notebookBadge">0/0</span></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="main-col">
+      <div class="speech" id="speech">
+        <svg class="face"><use href="#bunny-icon"/></svg>
+        <div id="speechText">今天有一群兔子要找新家，請把牠們公平地分配到房子裡吧！</div>
+      </div>
+
+      <div class="meadow-wrap">
+        <div class="zone-label">🌾 兔子草地（還沒有家的兔子）</div>
+        <div id="meadow" class="dropzone" data-zone="meadow"></div>
+      </div>
+
+      <div class="village-wrap">
+        <div class="zone-label">🏡 村莊地圖（拖兔子進來，每間用到的房子人數要一樣多）</div>
+        <div id="village"></div>
+      </div>
+
+      <footer class="controls">
+        <button class="btn secondary" id="resetBtn">🔄 重新開始這一關</button>
+        <button class="btn primary" id="checkBtn">✅ 檢查分房</button>
+      </footer>
+    </div>
+
+    <aside class="side-col" id="factorPanel">
+      <div class="side-head">
+        <div class="side-title">📖 已收集因數</div>
+        <div class="side-sub" id="sideSub">0 / 0</div>
+      </div>
+      <div class="factor-chip-list" id="factorChipList">
+        <div class="factor-empty" id="factorEmptyMsg">還沒有發現因數，拖拖看吧！</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- drag ghost -->
+<div id="ghost"><div class="stack" id="ghostStack"></div></div>
+
+<!-- notebook modal -->
+<div id="notebookModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-title">📖 因數收集本</div>
+    <div class="modal-sub" id="notebookSub"></div>
+    <div class="stamp-grid" id="stampGrid"></div>
+    <button class="btn primary modal-close" id="notebookClose">關閉</button>
+  </div>
+</div>
+
+<!-- level complete modal -->
+<div id="completeModal" class="modal-overlay hidden">
+  <div class="modal-card complete-card">
+    <div class="complete-emoji">🎉</div>
+    <div class="modal-title" id="completeTitle">恭喜完成本關卡！</div>
+    <div class="modal-sub" id="completeSub"></div>
+    <div class="factor-chip-list" id="completeFactorList" style="justify-content:center; margin:14px 0 6px;"></div>
+    <button class="btn primary modal-close" id="nextLevelBtn">下一關 →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- config ---------------- */
+  var LEVELS = [
+    {n:8},
+    {n:12},
+    {n:15},
+    {n:18},
+    {n:24}
+  ];
+  var MAX_ROOMS = 12;
+  var FUR_COLORS = ['#FFFFFF','#F6C9C4','#E7D3B0','#C9B8E8','#B7D8CE','#F4E1A1','#F0AFA0'];
+  var ROOF_COLORS = ['var(--roof-1)','var(--roof-2)','var(--roof-3)','var(--roof-4)'];
+
+  /* ---------------- state ---------------- */
+  var levelIndex = 0;
+  var rabbits = [];              // [{id, fur}]
+  var location = {};             // id -> 'meadow' | 'room-1'..'room-12'
+  var selected = new Set();
+  var foundByLevel = {};         // levelIndex -> Set(factor)
+  var rabbitIdSeq = 0;
+
+  var dragging = false;
+  var dragIds = [];
+  var pointerStart = {x:0,y:0};
+  var THRESH = 8;
+
+  /* ---------------- dom refs ---------------- */
+  var meadowEl = document.getElementById('meadow');
+  var villageEl = document.getElementById('village');
+  var ghostEl = document.getElementById('ghost');
+  var ghostStackEl = document.getElementById('ghostStack');
+  var speechEl = document.getElementById('speech');
+  var speechTextEl = document.getElementById('speechText');
+  var levelChipEl = document.getElementById('levelChip');
+  var notebookBadgeEl = document.getElementById('notebookBadge');
+
+  /* ---------------- helpers ---------------- */
+  function targetsForLevel(idx){
+    var n = LEVELS[idx].n;
+    var arr = [];
+    for(var r=1; r<=MAX_ROOMS; r++){ if(n % r === 0) arr.push(r); }
+    return arr;
+  }
+  function foundSet(idx){
+    if(!foundByLevel[idx]) foundByLevel[idx] = new Set();
+    return foundByLevel[idx];
+  }
+  function say(text, mood){
+    speechTextEl.textContent = text;
+    speechEl.className = 'speech' + (mood ? (' ' + mood) : '');
+  }
+  function bunnySVG(fur, extraClass, id){
+    return '<svg class="rabbit '+(extraClass||'')+'" style="color:'+fur+'" '+
+           (id!==undefined?'data-id="'+id+'"':'')+'><use href="#bunny-icon"/></svg>';
+  }
+
+  /* ---------------- level setup ---------------- */
+  function startLevel(idx){
+    levelIndex = idx;
+    var n = LEVELS[idx].n;
+    rabbits = [];
+    location = {};
+    selected.clear();
+    for(var i=0;i<n;i++){
+      var id = rabbitIdSeq++;
+      var fur = FUR_COLORS[Math.floor(Math.random()*FUR_COLORS.length)];
+      rabbits.push({id:id, fur:fur});
+      location[id] = 'meadow';
+    }
+    levelChipEl.textContent = '第 ' + (idx+1) + ' 關';
+    say('這一關有 ' + n + ' 隻兔子搬來了！請把牠們公平地分配到房子裡吧～', '');
+    buildVillage();
+    render();
+  }
+
+  function buildVillage(){
+    villageEl.innerHTML = '';
+    for(var k=1;k<=MAX_ROOMS;k++){
+      var hut = document.createElement('div');
+      hut.className = 'hut dropzone';
+      hut.dataset.zone = 'room-' + k;
+      var roof = ROOF_COLORS[(k-1) % ROOF_COLORS.length];
+      hut.innerHTML =
+        '<div class="hut-count" id="hutcount-'+k+'"></div>' +
+        '<div class="hut-roof" style="background:'+roof+'"></div>' +
+        '<div class="hut-wall dropzone" data-zone="room-'+k+'" id="hutwall-'+k+'">' +
+          '<div class="hut-num">'+k+'</div>' +
+          '<div class="hut-window"></div>' +
+        '</div>';
+      villageEl.appendChild(hut);
+    }
+  }
+
+  /* ---------------- render ---------------- */
+  function render(){
+    // meadow
+    var meadowIds = rabbits.filter(function(r){return location[r.id]==='meadow';});
+    meadowEl.innerHTML = meadowIds.map(function(r){
+      return bunnySVG(r.fur, selected.has(r.id)?'selected':'', r.id);
+    }).join('');
+
+    // rooms
+    for(var k=1;k<=MAX_ROOMS;k++){
+      var wall = document.getElementById('hutwall-'+k);
+      var countBadge = document.getElementById('hutcount-'+k);
+      var ids = rabbits.filter(function(r){return location[r.id]==='room-'+k;});
+      // clear existing rabbit nodes but keep hut-num/window
+      var keep = wall.querySelectorAll('.hut-num, .hut-window');
+      wall.innerHTML = '';
+      keep.forEach(function(node){ wall.appendChild(node); });
+      ids.forEach(function(r){
+        wall.insertAdjacentHTML('beforeend', bunnySVG(r.fur, selected.has(r.id)?'selected':'', r.id));
+      });
+      if(ids.length>0){
+        countBadge.textContent = ids.length;
+        countBadge.classList.add('show');
+      } else {
+        countBadge.classList.remove('show');
+      }
+    }
+
+    notebookBadgeEl.textContent = foundSet(levelIndex).size + '/' + targetsForLevel(levelIndex).length;
+    renderSidePanel();
+    bindRabbitEvents();
+  }
+
+  function factorChipsHTML(idx){
+    var n = LEVELS[idx].n;
+    var found = Array.from(foundSet(idx)).sort(function(a,b){return a-b;});
+    if(found.length === 0) return '';
+    return found.map(function(f){
+      return '<div class="factor-chip"><span>'+f+'</span><span class="eq">'+n+'÷'+f+'='+(n/f)+'</span></div>';
+    }).join('');
+  }
+
+  function renderSidePanel(){
+    var targets = targetsForLevel(levelIndex);
+    var found = foundSet(levelIndex);
+    document.getElementById('sideSub').textContent = found.size + ' / ' + targets.length;
+    var listEl = document.getElementById('factorChipList');
+    var html = factorChipsHTML(levelIndex);
+    listEl.innerHTML = html || '<div class="factor-empty" id="factorEmptyMsg">還沒有發現因數，拖拖看吧！</div>';
+  }
+
+  /* ---------------- selection + drag ---------------- */
+  function bindRabbitEvents(){
+    document.querySelectorAll('.rabbit').forEach(function(el){
+      el.onpointerdown = onRabbitPointerDown;
+    });
+  }
+
+  function onRabbitPointerDown(e){
+    e.preventDefault();
+    var id = parseInt(e.currentTarget.dataset.id, 10);
+    pointerStart = {x:e.clientX, y:e.clientY};
+    var moved = false;
+    var startedDrag = false;
+
+    function onMove(ev){
+      var dx = ev.clientX - pointerStart.x;
+      var dy = ev.clientY - pointerStart.y;
+      if(!startedDrag && Math.sqrt(dx*dx+dy*dy) > THRESH){
+        startedDrag = true;
+        beginDrag(id, ev);
+      }
+      if(startedDrag){ updateDrag(ev); }
+    }
+    function onUp(ev){
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      if(startedDrag){
+        endDrag(ev);
+      } else {
+        toggleSelect(id);
+      }
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  }
+
+  function toggleSelect(id){
+    if(selected.has(id)) selected.delete(id);
+    else selected.add(id);
+    render();
+  }
+
+  function beginDrag(id, ev){
+    dragging = true;
+    if(selected.has(id) && selected.size>0){
+      dragIds = Array.from(selected);
+    } else {
+      dragIds = [id];
+    }
+    var count = dragIds.length;
+    var furs = dragIds.slice(0,3).map(function(rid){
+      var r = rabbits.find(function(x){return x.id===rid;});
+      return r ? r.fur : '#fff';
+    });
+    ghostStackEl.innerHTML = furs.map(function(f,i){
+      return '<svg class="rabbit" style="color:'+f+'; left:'+(i*6)+'px; top:'+(i*-4)+'px;"><use href="#bunny-icon"/></svg>';
+    }).join('') + (count>1 ? '<div class="count-badge">×'+count+'</div>' : '');
+    ghostEl.style.display = 'block';
+    updateDrag(ev);
+  }
+
+  function updateDrag(ev){
+    ghostEl.style.left = ev.clientX + 'px';
+    ghostEl.style.top = ev.clientY + 'px';
+    document.querySelectorAll('.dropzone').forEach(function(z){ z.classList.remove('drop-hover'); });
+    ghostEl.style.display = 'none';
+    var under = document.elementFromPoint(ev.clientX, ev.clientY);
+    ghostEl.style.display = 'block';
+    var zone = under ? under.closest('.dropzone') : null;
+    if(zone) zone.classList.add('drop-hover');
+  }
+
+  function endDrag(ev){
+    dragging = false;
+    ghostEl.style.display = 'none';
+    document.querySelectorAll('.dropzone').forEach(function(z){ z.classList.remove('drop-hover'); });
+    ghostEl.style.display = 'none';
+    var under = document.elementFromPoint(ev.clientX, ev.clientY);
+    var zone = under ? under.closest('.dropzone') : null;
+    if(zone){
+      var target = zone.dataset.zone;
+      dragIds.forEach(function(id){ location[id] = target; });
+    }
+    selected.clear();
+    dragIds = [];
+    render();
+  }
+
+  /* ---------------- check logic ---------------- */
+  document.getElementById('checkBtn').addEventListener('click', function(){
+    var n = LEVELS[levelIndex].n;
+    var meadowCount = rabbits.filter(function(r){return location[r.id]==='meadow';}).length;
+
+    if(meadowCount > 0){
+      say('還有 ' + meadowCount + ' 隻兔子留在草地上找不到家，牠們會很孤單喔！請把所有兔子都送進房子裡。', 'warn');
+      shake(meadowEl);
+      return;
+    }
+
+    var roomCounts = [];
+    for(var k=1;k<=MAX_ROOMS;k++){
+      var c = rabbits.filter(function(r){return location[r.id]==='room-'+k;}).length;
+      if(c>0) roomCounts.push(c);
+    }
+    if(roomCounts.length === 0){
+      say('房子裡還沒有住任何兔子喔，先把兔子拖進去吧！', 'warn');
+      return;
+    }
+    var first = roomCounts[0];
+    var allEqual = roomCounts.every(function(c){return c===first;});
+
+    if(!allEqual){
+      say('房子裡住的兔子數量不一樣多，這樣不公平喔！每一間用到的房子，兔子數量要相同才行。', 'warn');
+      return;
+    }
+
+    var roomsUsed = roomCounts.length;
+    var perRoom = first;
+    // sanity: roomsUsed * perRoom should equal n automatically since meadow empty
+    var already = foundSet(levelIndex).has(roomsUsed);
+    foundSet(levelIndex).add(roomsUsed);
+
+    if(already){
+      say(n + ' ÷ ' + roomsUsed + ' = ' + perRoom + '，沒有餘數，可以整除！這個分法你已經收集過囉，再試試別的房間數吧～', 'ok');
+    } else {
+      say('🎉 ' + n + ' ÷ ' + roomsUsed + ' = ' + perRoom + '，沒有餘數，可以整除！你發現了 ' + n + ' 的一個因數：' + roomsUsed + '！', 'ok');
+      burstConfetti();
+    }
+    render();
+
+    var targets = targetsForLevel(levelIndex);
+    if(foundSet(levelIndex).size >= targets.length){
+      setTimeout(showComplete, 500);
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    rabbits.forEach(function(r){ location[r.id] = 'meadow'; });
+    selected.clear();
+    say('房子都清空囉，重新試一次吧！', '');
+    render();
+  });
+
+  function shake(el){
+    el.animate([
+      {transform:'translateX(0)'},{transform:'translateX(-6px)'},
+      {transform:'translateX(6px)'},{transform:'translateX(0)'}
+    ], {duration:280});
+  }
+
+  /* ---------------- notebook modal ---------------- */
+  var notebookModal = document.getElementById('notebookModal');
+  document.getElementById('notebookBtn').addEventListener('click', function(){
+    var n = LEVELS[levelIndex].n;
+    var targets = targetsForLevel(levelIndex);
+    var found = foundSet(levelIndex);
+    document.getElementById('notebookSub').textContent =
+      '這一關共有 ' + n + ' 隻兔子，找出所有能公平分房的房間數吧！（已收集 ' + found.size + ' / ' + targets.length + ' 種）';
+    document.getElementById('stampGrid').innerHTML = targets.map(function(t){
+      var f = found.has(t);
+      return '<div class="stamp '+(f?'found':'')+'">' +
+        '<span class="num">'+(f?t:'?')+'</span>' +
+        '<span class="eq">'+(f? (n+'÷'+t+'='+(n/t)) : '尚未發現')+'</span>' +
+      '</div>';
+    }).join('');
+    notebookModal.classList.remove('hidden');
+  });
+  document.getElementById('notebookClose').addEventListener('click', function(){
+    notebookModal.classList.add('hidden');
+  });
+
+  /* ---------------- complete modal ---------------- */
+  var completeModal = document.getElementById('completeModal');
+  function showComplete(){
+    var isLast = levelIndex === LEVELS.length - 1;
+    document.getElementById('completeTitle').textContent = isLast ? '🏆 全部關卡完成！你是分房大師！' : '🎉 因數收集本集滿了！';
+    document.getElementById('completeSub').textContent = isLast ?
+      '你幫所有兔子都找到了公平的家，也集滿了每一關的因數收集本！' :
+      '你找齊了這一關所有的分房方式，準備好迎接下一關了嗎？';
+    document.getElementById('nextLevelBtn').textContent = isLast ? '再玩一次 🔁' : '下一關 →';
+    document.getElementById('completeFactorList').innerHTML = factorChipsHTML(levelIndex);
+    completeModal.classList.remove('hidden');
+  }
+  document.getElementById('nextLevelBtn').addEventListener('click', function(){
+    completeModal.classList.add('hidden');
+    var isLast = levelIndex === LEVELS.length - 1;
+    startLevel(isLast ? 0 : levelIndex+1);
+  });
+
+  /* ---------------- confetti ---------------- */
+  function burstConfetti(){
+    var colors = ['#FF9F86','#FFC97A','#8ED1C4','#C9A6E0','#FF8FA3','#FFD166'];
+    for(var i=0;i<24;i++){
+      var p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = (Math.random()*100) + 'vw';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration = (1.4 + Math.random()*1.1) + 's';
+      p.style.opacity = 0.85;
+      document.body.appendChild(p);
+      (function(node){ setTimeout(function(){ node.remove(); }, 2600); })(p);
+    }
+  }
+
+  /* ---------------- intro ---------------- */
+  document.getElementById('startBtn').addEventListener('click', function(){
+    document.getElementById('intro-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    startLevel(0);
+  });
+
+})();
+</script>
+</body>
+</html>
